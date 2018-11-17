@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="2dip"
+    tools:context="com.hal9000.puzzleapp.ViewPictureActivity"
+    android:background="@color/colorBackground"
+    android:id="@+id/main_puzzle_layout">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/simple_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
+
+    <ImageView
+        android:id="@+id/galleryImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:layout_centerHorizontal="true"
+        android:contentDescription="@string/s_generalImageDescr"
+        android:layout_below="@id/topBorder"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/simple_toolbar"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ImageView
+        android:id="@+id/leftBorder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:foregroundGravity="center"
+        android:adjustViewBounds="true"
+        android:layout_toLeftOf="@id/galleryImage"
+        android:layout_alignTop="@id/galleryImage"
+        android:contentDescription="@string/s_generalImageDescr" />
+
+    <ImageView
+        android:id="@+id/rightBorder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:layout_toRightOf="@id/galleryImage"
+        android:layout_alignTop="@id/galleryImage"
+        android:contentDescription="@string/s_generalImageDescr"
+        app:layout_constraintLeft_toRightOf="@id/galleryImage"
+        app:layout_constraintTop_toTopOf="@id/topBorder"/>
+
+    <ImageView
+        android:id="@+id/topBorder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:adjustViewBounds="true"
+        android:layout_marginTop="10dp"
+        android:contentDescription="@string/s_generalImageDescr"
+        android:layout_below="@id/simple_toolbar"
+        android:layout_centerHorizontal="true" />
+
+    <ImageView
+        android:id="@+id/bottomBorder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/galleryImage"
+        android:layout_centerHorizontal="true"
+        android:adjustViewBounds="true"
+        android:contentDescription="@string/s_generalImageDescr" />
+
+    <RelativeLayout
+        android:id="@+id/puzzle_container_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="?attr/actionBarSize">
+    </RelativeLayout>
+
+</RelativeLayout>
+<!-- ConstraintLayout was messing up top and bottom borders (they ended up withing the pic instead of below/ above it) -->
+    <!--android:layout_below="@+id/galleryImage"-->
+<!--
+        <ImageView
+            android:id="@+id/galleryImage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="2dip"
+            android:scaleType="fitStart"
+            android:adjustViewBounds="true"
+            android:layout_marginEnd="2dip"
+            android:contentDescription="@string/s_generalImageDescr">
+        </ImageView>
+
+    <LinearLayout
+        android:id="@+id/puzzle_container_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:orientation="vertical"
+        android:layout_gravity="center_vertical"
+        android:gravity="center_vertical"
+        android:padding="2dp"
+        android:layout_weight="1">
+
+    </LinearLayout>
+-->
