@@ -1,5 +1,6 @@
 package com.hal9000.puzzleapp;
 
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,14 +39,14 @@ public class ImagePieceTouchListener implements View.OnTouchListener {
         // get raw touch coordinates (before they had been adjusted for the containing window and views)
         float x = motionEvent.getRawX();    // distance from left side of the screen
         float y = motionEvent.getRawY();    // distance from top of the screen
-        lParams = (RelativeLayout.LayoutParams) view.getLayoutParams();
+        lParams = (RelativeLayout.LayoutParams) view.getLayoutParams();  // to get distance from edges of view to edges of parent layout (margins)
 
         switch (motionEvent.getAction() & MotionEvent.ACTION_MASK) {
 
             case MotionEvent.ACTION_DOWN:
                 piece.bringToFront();
             // save initial position raw coords adjusted for distance or view to edge of their container view
-                xDelta = x - lParams.leftMargin;
+                xDelta = x - lParams.leftMargin;    // coord X relative to top left corner of image
                 yDelta = y - lParams.topMargin;
                 startMarginLeft = lParams.leftMargin;
                 startMarginTop = lParams.topMargin;
@@ -60,7 +61,7 @@ public class ImagePieceTouchListener implements View.OnTouchListener {
 
                 case MotionEvent.ACTION_MOVE:
             // update view position within container view while compensating for rawness of x and y
-                lParams.leftMargin = (int) (x - xDelta);
+                lParams.leftMargin = (int) (x - xDelta);    // because margins are calculated from edges of view (puzzle piece)
                 if (lParams.leftMargin < 0) lParams.leftMargin = 0; // prevent moving picture past left edge
                 lParams.topMargin = (int) (y - yDelta);
                 if (lParams.topMargin < 0) lParams.topMargin = 0; // prevent moving picture past top edge
@@ -93,8 +94,10 @@ public class ImagePieceTouchListener implements View.OnTouchListener {
                 int[] outLocationPuzzlePiecesContainer = new int[2];
                 ((View)view.getParent()).getLocationOnScreen(outLocationPuzzlePiecesContainer);
 
-                final double toleranceX = view.getWidth() * 0.1;
-                final double toleranceY = view.getHeight() * 0.1;
+                int puzzleImageContainerHeight = ((View)view.getParent().getParent()).findViewById(R.id.galleryImage).getHeight();
+
+                final double toleranceX = view.getWidth() * 0.2;
+                final double toleranceY = view.getHeight() * 0.2;
 
                 int xDiff = abs(piece.xCoord + outLocationImgContainer[0] - outLocationPiece[0]);
                 int yDiff = abs(piece.yCoord + outLocationImgContainer[1] - outLocationPiece[1]);
@@ -105,7 +108,7 @@ public class ImagePieceTouchListener implements View.OnTouchListener {
                     piece.canMove = false;
                     sendViewToBack(piece);
                 }
-                else {  // send to starting position
+                else if (outLocationPiece[1] < outLocationImgContainer[1] + puzzleImageContainerHeight) {  // send to starting position if ended up on puzzleImageContainer
                     TranslateAnimation animation = new TranslateAnimation(0, startMarginLeft - lParams.leftMargin,
                             0, startMarginTop - lParams.topMargin);
                     animation.setDuration(500);
@@ -150,6 +153,10 @@ public class ImagePieceTouchListener implements View.OnTouchListener {
 }
 
 /*
+                Log.d("ImagePieceTouchListener", "x = " + x);
+                Log.d("ImagePieceTouchListener", "xDelta = " + xDelta);
+                Log.d("ImagePieceTouchListener", "lParams.leftMargin = " + lParams.leftMargin);
+
                 Log.d("ImagePieceTouchListener", "MotionEvent.ACTION_DOWN");
                 Log.d("ImagePieceTouchListener", "view.getHeight() = " + view.getHeight());
                 Log.d("ImagePieceTouchListener", "xDelta = " + xDelta);
