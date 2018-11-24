@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="landscape_puzzle_border_margin_left">2dp</dimen>
+</resources>

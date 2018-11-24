@@ -1,6 +1,7 @@
 package com.hal9000.puzzleapp;
 
-import android.util.Log;
+import android.content.Context;
+import android.content.res.Configuration;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,9 +24,11 @@ public class ImagePieceTouchListener implements View.OnTouchListener {
     private RelativeLayout.LayoutParams lParams;
     private PuzzlePiece piece;
     PuzzlePieceAnimationListener puzzlePieceAnimationListener;
+    private Context context;
 
-    public ImagePieceTouchListener() {
+    public ImagePieceTouchListener(Context context) {
         puzzlePieceAnimationListener = new PuzzlePieceAnimationListener();
+        this.context = context;
     }
 
     @Override
@@ -94,7 +97,10 @@ public class ImagePieceTouchListener implements View.OnTouchListener {
                 int[] outLocationPuzzlePiecesContainer = new int[2];
                 ((View)view.getParent()).getLocationOnScreen(outLocationPuzzlePiecesContainer);
 
-                int puzzleImageContainerHeight = ((View)view.getParent().getParent()).findViewById(R.id.galleryImage).getHeight();
+                View galleryImageView = ((View)view.getParent().getParent()).findViewById(R.id.galleryImage);
+                int puzzleImageContainerHeight = galleryImageView.getHeight();
+                int puzzleImageContainerWidth = galleryImageView.getWidth();
+                galleryImageView = null;    // in case this class persists after activity gets destroyed
 
                 final double toleranceX = view.getWidth() * 0.2;
                 final double toleranceY = view.getHeight() * 0.2;
@@ -108,7 +114,11 @@ public class ImagePieceTouchListener implements View.OnTouchListener {
                     piece.canMove = false;
                     sendViewToBack(piece);
                 }
-                else if (outLocationPiece[1] < outLocationImgContainer[1] + puzzleImageContainerHeight) {  // send to starting position if ended up on puzzleImageContainer
+                else if ( (outLocationPiece[1] < outLocationImgContainer[1] + puzzleImageContainerHeight &&
+                        context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT) ||
+                        (outLocationPiece[0] < outLocationImgContainer[0] + puzzleImageContainerWidth &&
+                        context.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) ) {
+                    // send to starting position if ended up on puzzleImageContainer
                     TranslateAnimation animation = new TranslateAnimation(0, startMarginLeft - lParams.leftMargin,
                             0, startMarginTop - lParams.topMargin);
                     animation.setDuration(500);

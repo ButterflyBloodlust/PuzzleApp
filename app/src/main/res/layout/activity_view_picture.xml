@@ -74,29 +74,29 @@
     </RelativeLayout>
 
 </RelativeLayout>
-<!-- ConstraintLayout was messing up top and bottom borders (they ended up withing the pic instead of below/ above it) -->
+    <!-- ConstraintLayout was messing up top and bottom borders (they ended up withing the pic instead of below/ above it) -->
     <!--android:layout_below="@+id/galleryImage"-->
-<!--
-        <ImageView
-            android:id="@+id/galleryImage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="2dip"
-            android:scaleType="fitStart"
-            android:adjustViewBounds="true"
-            android:layout_marginEnd="2dip"
-            android:contentDescription="@string/s_generalImageDescr">
-        </ImageView>
+    <!--
+            <ImageView
+                android:id="@+id/galleryImage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="2dip"
+                android:scaleType="fitStart"
+                android:adjustViewBounds="true"
+                android:layout_marginEnd="2dip"
+                android:contentDescription="@string/s_generalImageDescr">
+            </ImageView>
 
-    <LinearLayout
-        android:id="@+id/puzzle_container_layout"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:orientation="vertical"
-        android:layout_gravity="center_vertical"
-        android:gravity="center_vertical"
-        android:padding="2dp"
-        android:layout_weight="1">
+        <LinearLayout
+            android:id="@+id/puzzle_container_layout"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_vertical"
+            android:padding="2dp"
+            android:layout_weight="1">
 
-    </LinearLayout>
--->
+        </LinearLayout>
+    -->
