@@ -89,15 +89,15 @@ public class ImagePieceTouchListener implements View.OnTouchListener {
                 int[] outLocationPiece = new int[2];
                 view.getLocationOnScreen(outLocationPiece);
 
-                // get absolute puzzle pieces' destination container position (where pieces are combined for final image)
-                int[] outLocationImgContainer = new int[2];
-                ((View)view.getParent().getParent()).findViewById(R.id.galleryImage).getLocationOnScreen(outLocationImgContainer);
-
                 // get absolute puzzle pieces' container position
                 int[] outLocationPuzzlePiecesContainer = new int[2];
                 ((View)view.getParent()).getLocationOnScreen(outLocationPuzzlePiecesContainer);
 
                 View galleryImageView = ((View)view.getParent().getParent()).findViewById(R.id.galleryImage);
+
+                // get absolute puzzle pieces' destination container position (where pieces are combined for final image)
+                int[] outLocationImgContainer = new int[2];
+                galleryImageView.getLocationOnScreen(outLocationImgContainer);
                 int puzzleImageContainerHeight = galleryImageView.getHeight();
                 int puzzleImageContainerWidth = galleryImageView.getWidth();
                 galleryImageView = null;    // in case this class persists after activity gets destroyed
@@ -112,6 +112,7 @@ public class ImagePieceTouchListener implements View.OnTouchListener {
                     lParams.topMargin = piece.yCoord + outLocationImgContainer[1] - outLocationPuzzlePiecesContainer[1];
                     piece.setLayoutParams(lParams);
                     piece.canMove = false;
+                    piece.pieceSolved();
                     sendViewToBack(piece);
                 }
                 else if ( (outLocationPiece[1] < outLocationImgContainer[1] + puzzleImageContainerHeight &&

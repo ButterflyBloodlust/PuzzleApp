@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name="com.hal9000.puzzleapp.MainActivity"
+            android:name=".MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -19,8 +19,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="com.hal9000.puzzleapp.ViewPictureActivity"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:name=".ViewPictureActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
     </application>
 
 </manifest>

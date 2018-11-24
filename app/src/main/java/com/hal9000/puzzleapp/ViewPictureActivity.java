@@ -1,5 +1,6 @@
 package com.hal9000.puzzleapp;
 
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -10,9 +11,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
+
+import com.hal9000.puzzleapp.ui.viewpictureactivity.ViewPictureActivityViewModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,12 +31,14 @@ public class ViewPictureActivity extends AppCompatActivity {
     private static final int SCATTER_ROWS_PORTRAIT = 2;  // this could technically be calculated based on views' parameters and number of pieces
     private static final int SCATTER_COLS_LANDSCAPE = 3;    // needs to be adjusted when changing PIECES_NUMBER
 
+    private ViewPictureActivityViewModel mViewModel;
+    private boolean isViewModelNew;
     private ArrayList<Integer> imageIDs;    // in case of adding an option later on to switch puzzle image in without leaving activity
     private int currentPosition = -1;
     private int screenWidth;
     private int screenHeight;
-    ArrayList<PuzzlePiece> pieces;
-    boolean globalLayoutListenerCalled = false;
+    private ArrayList<PuzzlePiece> pieces;
+    private boolean globalLayoutListenerCalled = false;
     /** Puzzle image params **/
     private int imgWidth;
     private int imgHeight;
@@ -52,10 +58,12 @@ public class ViewPictureActivity extends AppCompatActivity {
         imageIDs = (ArrayList<Integer>) getIntent().getSerializableExtra(KEY_PICTURES);
         currentPosition = getIntent().getIntExtra(KEY_REQUESTED_POS, 0);
 
+        mViewModel = ViewModelProviders.of(this).get(ViewPictureActivityViewModel.class);
+
         handleUIElements();
     }
 
-    public void handleUIElements() {
+    private void handleUIElements() {
         final ImageView bottomBorder = (ImageView) findViewById(R.id.bottomBorder);
         ViewTreeObserver vto = findViewById(R.id.puzzle_container_layout).getViewTreeObserver();
         vto.addOnGlobalLayoutListener(new CustomOnGlobalLayoutListener(pieces) {
@@ -74,7 +82,9 @@ public class ViewPictureActivity extends AppCompatActivity {
                     globalLayoutListenerCalled = true;
                     setPuzzleImageParams();
                     initPuzzleImageBordersAndContainer();
+                    //Log.d("ViewPictureActivity", "pieces = " + null);
                     pieces = splitPicture();
+                    isViewModelNew = mViewModel.setImagePiecesSolved(imageIDs.get(currentPosition), pieces);
                 }
             }
         });
@@ -115,30 +125,40 @@ public class ViewPictureActivity extends AppCompatActivity {
         // Calculate the with and height of the pieces
         int pieceWidth = scaledBitmap.getWidth()/ COLS;
         int pieceHeight = scaledBitmap.getHeight()/ ROWS;
+        int pos = 0;
 
         // Create each bitmap piece and add it to the resulting array
         for (int row = 0, yCoord = 0; row < ROWS; row++, yCoord += pieceHeight) {
             for (int col = 0, xCoord = 0; col < COLS; col++, xCoord += pieceWidth) {
-                PuzzlePiece piece = new PuzzlePiece(getApplicationContext());
+                PuzzlePiece piece = new PuzzlePiece(this);
                 piece.setImageBitmap(Bitmap.createBitmap(scaledBitmap, xCoord, yCoord, pieceWidth, pieceHeight));
                 piece.xCoord = xCoord;
                 piece.yCoord = yCoord;
                 piece.pieceWidth = pieceWidth;
                 piece.pieceHeight = pieceHeight;
+                piece.ID = pos++;
                 pieces.add(piece);
             }
         }
         return pieces;
     }
 
+    public void setPieceSolved(int ID) {
+        mViewModel.setPieceSolved(ID);
+    }
+
     private void scatterPieces() {
+
+        int[] outLocationPuzzlePiecesContainer = new int[2];
+        findViewById(R.id.puzzle_container_layout).getLocationOnScreen(outLocationPuzzlePiecesContainer);
+
+        int[] outLocationImgContainer = new int[2];
+        findViewById(R.id.galleryImage).getLocationOnScreen(outLocationImgContainer);
+
         if (getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {
 
             int[] outLocationRightBorder = new int[2];
-            findViewById(R.id.rightBorder).getLocationOnScreen(outLocationRightBorder);  // get location of bottom border of puzzle image container
-
-            int[] outLocationPuzzlePiecesContainer = new int[2];
-            findViewById(R.id.puzzle_container_layout).getLocationOnScreen(outLocationPuzzlePiecesContainer);
+            findViewById(R.id.rightBorder).getLocationOnScreen(outLocationRightBorder);
 
             RelativeLayout layout = findViewById(R.id.puzzle_container_layout);
             int scatterRows = pieces.size() / SCATTER_COLS_LANDSCAPE;  // rounded down, account for possible leftovers later
@@ -160,11 +180,17 @@ public class ViewPictureActivity extends AppCompatActivity {
                     piece = pieces.get(addedPieces++);
                     RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(piece.pieceWidth, piece.pieceHeight);
 
-                    int randomOffset = (int) ((Math.random()) * piece.pieceWidth * 0.15);
-                    layoutParams.topMargin = y_coord + piece.pieceHeight < layout.getHeight() ?
-                            y_coord + randomOffset : layout.getHeight() - piece.pieceHeight - randomOffset;
+                    if (mViewModel.isPieceSolved(piece.ID)) {
+                        layoutParams.leftMargin = piece.xCoord + outLocationImgContainer[0] - outLocationPuzzlePiecesContainer[0];
+                        layoutParams.topMargin = piece.yCoord + outLocationImgContainer[1] - outLocationPuzzlePiecesContainer[1];
+                    }
+                    else {
+                        int randomOffset = (int) ((Math.random()) * piece.pieceWidth * 0.15);
+                        layoutParams.topMargin = y_coord + piece.pieceHeight < layout.getHeight() ?
+                                y_coord + randomOffset : layout.getHeight() - piece.pieceHeight - randomOffset;
 
-                    layoutParams.leftMargin = leftMargin - (int) ((Math.random() - 0.5) * piece.pieceWidth * 0.15);
+                        layoutParams.leftMargin = leftMargin - (int) ((Math.random()) * piece.pieceWidth * 0.15);
+                    }
 
                     piece.setOnTouchListener(new ImagePieceTouchListener(getApplicationContext()));
                     layout.addView(piece, layoutParams);
@@ -175,11 +201,17 @@ public class ViewPictureActivity extends AppCompatActivity {
                 PuzzlePiece piece = pieces.get(addedPieces++);
                 RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(piece.pieceWidth, piece.pieceHeight);
 
-                layoutParams.topMargin = (int) (piece.pieceHeight * (i + 0.5) - ((Math.random() - 0.5) * piece.pieceHeight * 0.3));
+                if (mViewModel.isPieceSolved(piece.ID)) {
+                    layoutParams.leftMargin = piece.xCoord + outLocationImgContainer[0] - outLocationPuzzlePiecesContainer[0];
+                    layoutParams.topMargin = piece.yCoord + outLocationImgContainer[1] - outLocationPuzzlePiecesContainer[1];
+                }
+                else {
+                    layoutParams.topMargin = (int) (piece.pieceHeight * (i + 0.5) - ((Math.random() - 0.5) * piece.pieceHeight * 0.3));
 
-                layoutParams.leftMargin = (int) ((rightBorderEndXRelative + piece.pieceWidth * 1.5 < layout.getWidth() ?
-                        rightBorderEndXRelative + piece.pieceWidth * 0.5 :
-                        layout.getWidth() - piece.pieceWidth) - ((Math.random() - 0.5) * piece.pieceHeight * 0.3));
+                    layoutParams.leftMargin = (int) ((rightBorderEndXRelative + piece.pieceWidth * 1.5 < layout.getWidth() ?
+                            rightBorderEndXRelative + piece.pieceWidth * 0.5 :
+                            layout.getWidth() - piece.pieceWidth) - ((Math.random() - 0.5) * piece.pieceHeight * 0.3));
+                }
 
                 piece.setOnTouchListener(new ImagePieceTouchListener(getApplicationContext()));
                 layout.addView(piece, layoutParams);
@@ -188,14 +220,11 @@ public class ViewPictureActivity extends AppCompatActivity {
         else {
             int[] outLocationBottomBorder = new int[2];
             findViewById(R.id.bottomBorder).getLocationOnScreen(outLocationBottomBorder);  // get location of bottom border of puzzle image container
-
-            int[] outLocationPuzzlePiecesContainer = new int[2];
-            findViewById(R.id.puzzle_container_layout).getLocationOnScreen(outLocationPuzzlePiecesContainer);
 /*
-        Log.d("ViewPictureActivity", "outLocationBottomBorder[0] = " + outLocationBottomBorder[0]);
-        Log.d("ViewPictureActivity", "outLocationBottomBorder[1] = " + outLocationBottomBorder[1]);
-        Log.d("ViewPictureActivity", "outLocationPuzzlePiecesContainer[0] = " + outLocationPuzzlePiecesContainer[0]);
-        Log.d("ViewPictureActivity", "outLocationPuzzlePiecesContainer[1] = " + outLocationPuzzlePiecesContainer[1]);
+            Log.d("ViewPictureActivity", "outLocationBottomBorder[0] = " + outLocationBottomBorder[0]);
+            Log.d("ViewPictureActivity", "outLocationBottomBorder[1] = " + outLocationBottomBorder[1]);
+            Log.d("ViewPictureActivity", "outLocationPuzzlePiecesContainer[0] = " + outLocationPuzzlePiecesContainer[0]);
+            Log.d("ViewPictureActivity", "outLocationPuzzlePiecesContainer[1] = " + outLocationPuzzlePiecesContainer[1]);
 */
             RelativeLayout layout = findViewById(R.id.puzzle_container_layout);
             int scatterCols = pieces.size() / SCATTER_ROWS_PORTRAIT;  // rounded down, account for possible leftovers later
@@ -205,9 +234,9 @@ public class ViewPictureActivity extends AppCompatActivity {
                     + findViewById(R.id.bottomBorder).getHeight();
             int distanceBottomBorderToBottom = layout.getHeight() - bottomBorderEndYRelative;
 /*
-        Log.d("ViewPictureActivity", "outLocationBottomBorder[1] = " + outLocationBottomBorder[1]);
-        Log.d("ViewPictureActivity", "bottomBorderEndYRelative = " + bottomBorderEndYRelative);
-        Log.d("ViewPictureActivity", "distanceBottomBorderToBottom = " + distanceBottomBorderToBottom);
+            Log.d("ViewPictureActivity", "outLocationBottomBorder[1] = " + outLocationBottomBorder[1]);
+            Log.d("ViewPictureActivity", "bottomBorderEndYRelative = " + bottomBorderEndYRelative);
+            Log.d("ViewPictureActivity", "distanceBottomBorderToBottom = " + distanceBottomBorderToBottom);
 */
             int addedPieces = 0;
             for (int y = 0, y_coord = bottomBorderEndYRelative; y < SCATTER_ROWS_PORTRAIT && addedPieces < pieces.size(); y++,
@@ -221,10 +250,16 @@ public class ViewPictureActivity extends AppCompatActivity {
                     piece = pieces.get(addedPieces++);
                     RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(piece.pieceWidth, piece.pieceHeight);
 
-                    layoutParams.leftMargin = (x_coord + piece.pieceWidth < layout.getWidth() ?
-                            x_coord : layout.getWidth() - piece.pieceWidth) - (int) ((Math.random() - 0.5) * piece.pieceHeight * 0.15);
+                    if (mViewModel.isPieceSolved(piece.ID)) {
+                        layoutParams.leftMargin = piece.xCoord + outLocationImgContainer[0] - outLocationPuzzlePiecesContainer[0];
+                        layoutParams.topMargin = piece.yCoord + outLocationImgContainer[1] - outLocationPuzzlePiecesContainer[1];
+                    }
+                    else {
+                        layoutParams.leftMargin = (x_coord + piece.pieceWidth < layout.getWidth() ?
+                                x_coord : layout.getWidth() - piece.pieceWidth) - (int) ((Math.random() - 0.5) * piece.pieceHeight * 0.15);
 
-                    layoutParams.topMargin = topMargin - (int) ((Math.random()) * piece.pieceHeight * 0.15);
+                        layoutParams.topMargin = topMargin - (int) ((Math.random()) * piece.pieceHeight * 0.15);
+                    }
 
                     piece.setOnTouchListener(new ImagePieceTouchListener(getApplicationContext()));
                     layout.addView(piece, layoutParams);
@@ -235,11 +270,17 @@ public class ViewPictureActivity extends AppCompatActivity {
                 PuzzlePiece piece = pieces.get(addedPieces++);
                 RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(piece.pieceWidth, piece.pieceHeight);
 
-                layoutParams.leftMargin = (int) (piece.pieceWidth * (i + 0.5) - ((Math.random() - 0.5) * piece.pieceHeight * 0.3));
+                if (mViewModel.isPieceSolved(piece.ID)) {
+                    layoutParams.leftMargin = piece.xCoord + outLocationImgContainer[0] - outLocationPuzzlePiecesContainer[0];
+                    layoutParams.topMargin = piece.yCoord + outLocationImgContainer[1] - outLocationPuzzlePiecesContainer[1];
+                }
+                else {
+                    layoutParams.leftMargin = (int) (piece.pieceWidth * (i + 0.5) - ((Math.random() - 0.5) * piece.pieceHeight * 0.3));
 
-                layoutParams.topMargin = (int) ((bottomBorderEndYRelative + piece.pieceWidth * 1.5 < layout.getHeight() ?
-                        bottomBorderEndYRelative + piece.pieceWidth * 0.5 :
-                        layout.getHeight() - piece.pieceHeight) - ((Math.random() - 0.5) * piece.pieceHeight * 0.3));
+                    layoutParams.topMargin = (int) ((bottomBorderEndYRelative + piece.pieceWidth * 1.5 < layout.getHeight() ?
+                            bottomBorderEndYRelative + piece.pieceWidth * 0.5 :
+                            layout.getHeight() - piece.pieceHeight) - ((Math.random() - 0.5) * piece.pieceHeight * 0.3));
+                }
 
                 piece.setOnTouchListener(new ImagePieceTouchListener(getApplicationContext()));
                 layout.addView(piece, layoutParams);
